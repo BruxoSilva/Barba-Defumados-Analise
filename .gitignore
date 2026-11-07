@@ -1,0 +1,15 @@
+**/node_modules/
+**/.next/
+**/bin/
+**/obj/
+**/.env*
+!**/.env.example
+**/*.db*
+**/*.sqlite*
+**/*.exe
+**/*.pdb
+**/*.dll
+**/uploads*/
+**/backups*/
+**/test-results/
+**/*.tsbuildinfo

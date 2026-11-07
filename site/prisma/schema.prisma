@@ -1,0 +1,288 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "sqlite"
+ url = env("DATABASE_URL")
+}
+model User {
+ id String @id @default(cuid())
+ email String @unique
+ name String
+ phone String?
+ passwordHash String?
+ role String @default("CUSTOMER")
+ createdAt DateTime @default(now())
+ provider String?
+ providerId String?
+ profileComplete Boolean @default(false)
+ acceptedTermsAt DateTime?
+ ageConfirmedAt DateTime?
+ deletedAt DateTime?
+ address Address?
+ carts Cart[]
+ orders Order[]
+ referralCodes ReferralCode[]
+ cashbackEntries CashbackEntry[]
+ reviews Review[]
+}
+model LoginCode {
+ id String @id @default(cuid())
+ phone String
+ codeHash String
+ expiresAt DateTime
+ usedAt DateTime?
+ createdAt DateTime @default(now())
+}
+model Address {
+ id String @id @default(cuid())
+ userId String @unique
+ user User @relation(fields:[userId],references:[id])
+ cep String
+ street String
+ number String
+ complement String?
+ neighborhood String
+ city String
+ state String
+ updatedAt DateTime @updatedAt
+}
+model Setting {
+ key String @id
+ value String
+ type String @default("string")
+ group String @default("general")
+ label String
+}
+model Category {
+ id String @id @default(cuid())
+ name String @unique
+ slug String @unique
+ active Boolean @default(true)
+ position Int @default(0)
+ products Product[]
+ promotions Promotion[]
+}
+model KitPart {
+ id String @id @default(cuid())
+ kitId String
+ kit Product @relation("Kit",fields:[kitId],references:[id])
+ componentId String
+ component Product @relation("Component",fields:[componentId],references:[id])
+ quantityUnits Int
+ @@unique([kitId,componentId])
+}
+model Product {
+ id String @id @default(cuid())
+ name String
+ slug String @unique
+ description String
+ priceCents Int
+ wholesalePriceCents Int?
+ wholesaleMinQty Int?
+ categoryId String
+ category Category @relation(fields:[categoryId],references:[id])
+ active Boolean @default(true)
+ imagePath String?
+ createdAt DateTime @default(now())
+ weightGrams Int @default(0)
+ saleUnit String @default("UN")
+ smokeType String?
+ notes String?
+ pairing String?
+ badges String?
+ lowStockThreshold Int @default(5)
+ media ProductMedia[]
+ lots StockLot[]
+ cartItems CartItem[]
+ orderItems OrderItem[]
+ reviews Review[]
+ waitlist WaitlistEntry[]
+ promotions Promotion[]
+ kitParts KitPart[] @relation("Kit")
+ includedInKits KitPart[] @relation("Component")
+}
+model ProductMedia {
+ id String @id @default(cuid())
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ path String
+ type String
+ position Int @default(0)
+ primary Boolean @default(false)
+}
+model StockLot {
+ id String @id @default(cuid())
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ code String
+ producedAt DateTime?
+ expiresAt DateTime?
+ quantityUnits Int @default(0)
+ movements StockMovement[]
+ reservations CartItem[]
+ @@unique([productId,code])
+}
+model StockMovement {
+ id String @id @default(cuid())
+ lotId String
+ lot StockLot @relation(fields:[lotId],references:[id])
+ deltaUnits Int
+ reason String
+ actorId String
+ createdAt DateTime @default(now())
+}
+model Cart {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields:[userId],references:[id])
+ status String @default("ACTIVE")
+ expiresAt DateTime
+ warnedAt DateTime?
+ createdAt DateTime @default(now())
+ items CartItem[]
+}
+model CartItem {
+ id String @id @default(cuid())
+ cartId String
+ cart Cart @relation(fields:[cartId],references:[id])
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ lotId String
+ lot StockLot @relation(fields:[lotId],references:[id])
+ quantityUnits Int
+ @@unique([cartId,lotId])
+}
+model Order {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields:[userId],references:[id])
+ status String @default("RECEIVED")
+ subtotalCents Int
+ discountCents Int @default(0)
+ shippingCents Int @default(0)
+ cashbackUsedCents Int @default(0)
+ totalCents Int
+ paymentMethod String
+ deliveryMethod String
+ deliverySlot String?
+ addressSnapshot String?
+ referralCodeId String?
+ referralCode ReferralCode? @relation(fields:[referralCodeId],references:[id])
+ createdAt DateTime @default(now())
+ deliveredAt DateTime?
+ items OrderItem[]
+ cashbackEntries CashbackEntry[]
+ reviews Review[]
+}
+model OrderItem {
+ id String @id @default(cuid())
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ productName String
+ quantityUnits Int
+ unitPriceCents Int
+ lotCode String
+ lotId String
+}
+model DeliveryRate {
+ id String @id @default(cuid())
+ name String
+ neighborhood String?
+ cepStart String?
+ cepEnd String?
+ priceCents Int
+ active Boolean @default(true)
+}
+model ReferralCode {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields:[userId],references:[id])
+ code String @unique
+ percentBps Int
+ createdAt DateTime @default(now())
+ active Boolean @default(true)
+ orders Order[]
+}
+model CashbackEntry {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields:[userId],references:[id])
+ orderId String?
+ order Order? @relation(fields:[orderId],references:[id])
+ amountCents Int
+ remainingCents Int @default(0)
+ status String
+ expiresAt DateTime?
+ createdAt DateTime @default(now())
+ warnedAt DateTime?
+}
+model Promotion {
+ id String @id @default(cuid())
+ name String
+ kind String
+ code String? @unique
+ percentBps Int?
+ amountCents Int?
+ minOrderCents Int @default(0)
+ usageLimit Int?
+ usedCount Int @default(0)
+ startsAt DateTime?
+ endsAt DateTime?
+ productId String?
+ product Product? @relation(fields:[productId],references:[id])
+ categoryId String?
+ category Category? @relation(fields:[categoryId],references:[id])
+ active Boolean @default(true)
+ region String?
+}
+model Review {
+ id String @id @default(cuid())
+ userId String
+ user User @relation(fields:[userId],references:[id])
+ orderId String
+ order Order @relation(fields:[orderId],references:[id])
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ stars Int
+ comment String
+ status String @default("PENDING")
+ response String?
+ createdAt DateTime @default(now())
+ @@unique([orderId,productId])
+}
+model WaitlistEntry {
+ id String @id @default(cuid())
+ productId String
+ product Product @relation(fields:[productId],references:[id])
+ userId String
+ phone String
+ createdAt DateTime @default(now())
+ @@unique([productId,userId])
+}
+model Feedback {
+ id String @id @default(cuid())
+ userId String?
+ text String
+ createdAt DateTime @default(now())
+}
+model AuditLog {
+ id String @id @default(cuid())
+ actorId String
+ action String
+ entity String
+ entityId String
+ beforeJson String?
+ afterJson String?
+ createdAt DateTime @default(now())
+}
+model OutboxMessage {
+ id String @id @default(cuid())
+ channel String
+ recipient String
+ body String
+ status String @default("SIMULATED")
+ createdAt DateTime @default(now())
+}

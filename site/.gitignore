@@ -1,0 +1,12 @@
+node_modules
+.next
+.env
+.env.local
+*.db
+*.db-journal
+playwright-report
+test-results
+uploads
+backups
+uploads-test
+backups-test
