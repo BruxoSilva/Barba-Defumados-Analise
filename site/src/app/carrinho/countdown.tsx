@@ -1,0 +1,3 @@
+'use client';
+import { useEffect,useState } from 'react';
+export function Countdown({expiresAt}:{expiresAt:string}){const [left,setLeft]=useState(0);useEffect(()=>{const update=()=>setLeft(Math.max(0,new Date(expiresAt).getTime()-Date.now()));update();const id=setInterval(update,1000);return()=>clearInterval(id)},[expiresAt]);const hours=Math.floor(left/3600000);const minutes=Math.floor(left%3600000/60000);const seconds=Math.floor(left%60000/1000);return <span aria-live="off">Reserva: {hours.toString().padStart(2,'0')}:{minutes.toString().padStart(2,'0')}:{seconds.toString().padStart(2,'0')}</span>}

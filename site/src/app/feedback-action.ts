@@ -1,0 +1,2 @@
+'use server';import { redirect } from 'next/navigation';import { z } from 'zod';import { db } from '@/lib/db';import { currentSession } from '@/lib/session';
+export async function feedbackAction(form:FormData){const text=z.string().trim().min(5).max(2000).parse(String(form.get('text')??''));const session=await currentSession();await db.feedback.create({data:{userId:session?.userId,text}});redirect('/?feedback=ok')}

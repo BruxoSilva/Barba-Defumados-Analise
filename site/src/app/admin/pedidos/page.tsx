@@ -1,0 +1,7 @@
+import { formatReais } from '@/lib/money-input';
+import { db } from '@/lib/db';import { requireAdmin } from '@/lib/session';import { AdminNav } from '@/components/admin-nav';import { statusAction } from './actions';
+export const dynamic='force-dynamic';
+const next:Record<string,string[]>={RECEIVED:['PREPARING','CANCELLED'],PREPARING:['OUT_FOR_DELIVERY','CANCELLED'],OUT_FOR_DELIVERY:['DELIVERED','CANCELLED']};
+const labels:Record<string,string>={RECEIVED:'Recebido',PREPARING:'Em preparo',OUT_FOR_DELIVERY:'Saiu para entrega',DELIVERED:'Entregue',CANCELLED:'Cancelado'};
+export default async function AdminOrders(){await requireAdmin();const orders=await db.order.findMany({include:{user:true,items:true},orderBy:{createdAt:'desc'}});return <main id="conteudo" className="admin-wrap"><h1>Pedidos</h1><AdminNav/>{orders.length?orders.map(o=><section className="admin-card" key={o.id}><h2>Pedido {o.id.slice(-8)} · {labels[o.status]}</h2><p>{o.user.name} · {o.createdAt.toLocaleString('pt-BR')} · {formatReais(o.totalCents)}</p>{o.items.map(i=><p key={i.id}>{i.quantityUnits} × {i.productName}</p>)}{next[o.status]&&<form action={statusAction}><input type="hidden" name="orderId" value={o.id}/><label className="field">Alterar status<select name="status">{next[o.status].map(s=><option key={s} value={s}>{labels[s]}</option>)}</select></label><button className="button">Salvar status</button></form>}</section>):<p>Nenhum pedido ainda.</p>}</main>}
+
